@@ -114,7 +114,7 @@ def test_get_tokenizer_2():
             {"tokenizer_id": "KoboldAI/fairseq-dense-125M"}
         )
     )
-    assert expected + "<s>" == actual
+    assert f"{expected}<s>" == actual
 
 
 def test_get_tokenizer_error():

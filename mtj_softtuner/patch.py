@@ -158,8 +158,7 @@ class PatchMeta(type):
         *args,
         **kwargs
     ):
-        for attr in namespace:
-            value = namespace[attr]
+        for attr, value in namespace.items():
             if callable(value):
                 namespace[attr] = patch(value)
         return type.__new__(cls, name, bases, namespace, *args, **kwargs)

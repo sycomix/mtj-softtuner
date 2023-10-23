@@ -94,7 +94,7 @@ class TrainerBase(abc.ABC):
         if universe is not None:
             try:
                 self.data = serialization.restore_variable(
-                    universe, type(self).__name__ + "_" + "data"
+                    universe, f"{type(self).__name__}_data"
                 )
             except ValueError:
                 pass
@@ -109,9 +109,7 @@ class TrainerBase(abc.ABC):
             for p in ("optimizer", "soft_in_dim"):
                 self.data.params.pop(p, None)
         serialization.save_variable(
-            self.universe,
-            type(self).__name__ + "_" + "data",
-            self.data,
+            self.universe, f"{type(self).__name__}_data", self.data
         )
 
     def get_hf_checkpoint_metadata(self, test_mode_override=False) -> bool:
@@ -291,9 +289,11 @@ class TrainerBase(abc.ABC):
         print("Batch size:", batch_size)
         print(termcolor.colored("Tokenizing your dataset...\n", "magenta"))
 
-        if not isinstance(dataset_path, str):
-            files = [dataset_path]
-        elif os.path.isfile(dataset_path):
+        if (
+            not isinstance(dataset_path, str)
+            or isinstance(dataset_path, str)
+            and os.path.isfile(dataset_path)
+        ):
             files = [dataset_path]
         else:
             files = sorted(
@@ -305,10 +305,7 @@ class TrainerBase(abc.ABC):
         tokens = []
         eos = tokenizer.decode(self.data.params["eos_token"])
         for path in files:
-            if isinstance(path, str):
-                f = open(path)
-            else:
-                f = path
+            f = open(path) if isinstance(path, str) else path
             try:
                 text = f.read()
                 if use_ftfy:
@@ -325,8 +322,7 @@ class TrainerBase(abc.ABC):
                 "Your dataset is too small!  The number of tokens has to be greater than the batch size.  Try increasing the epochs.",
                 code=13,
             )
-        tail = len(tokens) % (batch_size + 1)
-        if tail:
+        if tail := len(tokens) % (batch_size + 1):
             print(
                 f"We're removing the last {tail} tokens from your dataset to make the length a multiple of {batch_size+1}."
             )
@@ -340,17 +336,14 @@ class TrainerBase(abc.ABC):
             tokens = np.concatenate(
                 (
                     tokens,
-                    *(rng.permutation(tokens, axis=0) for i in range(_epochs - 1)),
+                    *(rng.permutation(tokens, axis=0) for _ in range(_epochs - 1)),
                 ),
                 axis=0,
             )
         tokens = tokens[: math.ceil(epochs * sequences_per_epoch)]
         print(f"Total sequences in your dataset: {tokens.shape[0]}")
 
-        if isinstance(output_file, str):
-            f = open(output_file, "w")
-        else:
-            f = output_file
+        f = open(output_file, "w") if isinstance(output_file, str) else output_file
         try:
             np.save(output_file, tokens)
         finally:

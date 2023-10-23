@@ -123,11 +123,10 @@ def get_old_shape(t, dim=2):
             return (shard_shape[0], shard_shape[1] // total_shards)
         else:
             raise ValueError(f"unsupported dim {dim}")
-    if len(t.shape) == 1:
-        assert t.shape[0] % total_shards == 0
-        return (t.shape[0] // total_shards,)
-    else:
+    if len(t.shape) != 1:
         raise ValueError(f"unsupported shape {t.shape}")
+    assert t.shape[0] % total_shards == 0
+    return (t.shape[0] // total_shards,)
 
 
 def split(a, n):
@@ -193,7 +192,10 @@ def test_read_ckpt_neo():
         if transform[0] in ("transformer.wte.weight", "lm_head.weight"):
             params = torch.cat((params, torch.zeros(143, params.shape[1])))
 
-        if not any(s in transform[0] for s in ("wte", "wpe")) and params.ndim == 2:
+        if (
+            all(s not in transform[0] for s in ("wte", "wpe"))
+            and params.ndim == 2
+        ):
             params = params.T
 
         if transform[2] is not None:

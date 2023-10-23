@@ -192,7 +192,7 @@ def push_noise_data(
     if not HAS_IPYTHON:
         return
     if b_simple is None:
-        IPython.display.display(IPython.display.Javascript(f"updaten();"))
+        IPython.display.display(IPython.display.Javascript("updaten();"))
     else:
         IPython.display.display(
             IPython.display.Javascript(

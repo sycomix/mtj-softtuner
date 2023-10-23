@@ -452,7 +452,7 @@ def reshard_reverse(x, total_shards, old_shape):
     assert len(x.shape) != 1
     if len(x.shape) == 2:
         if old_shape[1] == x.shape[1]:
-            out = x[0:1].tile((total_shards, 1))
+            out = x[:1].tile((total_shards, 1))
         else:
             out = x.reshape(old_shape)
     elif len(x.shape) == 3:
@@ -670,7 +670,7 @@ def initialize(
         f"http://{tpu_addr_without_port}:8475/requestversion/{driver_version}"
     )
     jax.config.FLAGS.jax_xla_backend = "tpu_driver"
-    jax.config.FLAGS.jax_backend_target = "grpc://" + tpu_addr
+    jax.config.FLAGS.jax_backend_target = f"grpc://{tpu_addr}"
     spinner.terminate()
     print(flush=True)
     if jax.device_count() < 8:
@@ -746,7 +746,7 @@ def get_hf_checkpoint_metadata(ckpt_path: str):
         os.path.dirname(os.path.realpath(__file__)),
         "kobold",
         "maps",
-        model_config.model_type + ".json",
+        f"{model_config.model_type}.json",
     )
     if not os.path.isfile(spec_path):
         raise NotImplementedError(
